@@ -52,31 +52,27 @@ autoinstall:
               # Ensure this hash is generated with `mkpasswd -m yescrypt` (Ubuntu 22.04+)
               passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
               groups: [adm, sudo, docker]
-              # Uncomment if you want passwordless sudo:
-              # sudo: "ALL=(ALL) NOPASSWD:ALL"
-
-        # Optimization: Use the 'snaps' module instead of runcmd for cleaner syntax
-        # (Though runcmd is still valid, snaps is preferred for timing)
-        snaps:
-            - { name: pycharm, classic: true }
-            - { name: datagrip, classic: true }
-            - { name: rustrover, classic: true }
-            - { name: code, classic: true }
-            - { name: vault }
-            - { name: bitwarden }
-            - { name: postman }
-            # WARNING: 'gitlab' snap is often deprecated or bare. Did you mean a runner?
-            # - {name: gitlab}
-            - { name: remmina }
-            - { name: libreoffice }
+              Uncomment if you want passwordless sudo:
+              sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
-            # Wait for network (laptops often bring Wi-Fi up late)
-            - bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
-
-            # Wait for snap pre-seeding is handled automatically by the 'snaps' module above
-            # But kept here for the manual commands below
+            # wait until snapd is ready
             - bash -lc "snap wait system seed.loaded"
+            - bash -lc "until snap system >/dev/null 2>&1; do sleep 5; done"
+
+            # IDE snaps
+            - snap install pycharm --classic
+            - snap install datagrip --classic
+            - snap install rustrover --classic
+            - snap install code --classic
+
+            # other snaps
+            - snap install vault
+            - snap install bitwarden
+            - snap install postman
+            - snap install gitlab
+            - snap install remmina
+            - snap install libreoffice
 
             # Rust as xmars (install into /home/xmars)
             - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
