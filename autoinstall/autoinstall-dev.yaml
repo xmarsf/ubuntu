@@ -16,6 +16,9 @@ autoinstall:
         - curtin in-target -- systemctl enable docker
         - curtin in-target -- systemctl start docker
 
+        # IMPORTANT: allow cloud-init to run on first boot
+        - curtin in-target -- rm -f /etc/cloud/cloud-init.disabled
+
     user-data:
         users:
             - name: xmars
@@ -29,6 +32,7 @@ autoinstall:
 
         runcmd:
             # wait until snapd is ready
+            - bash -lc "snap wait system seed.loaded"
             - bash -lc "until snap system >/dev/null 2>&1; do sleep 5; done"
 
             # IDE snaps
