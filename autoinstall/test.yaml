@@ -1,0 +1,30 @@
+#cloud-config
+autoinstall:
+    version: 1
+    identity:
+        realname: "Universe"
+        hostname: universe
+        username: xmars
+        password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+    packages:
+        - docker.io
+        - docker-compose-v2
+    groups:
+        - docker
+    user-data:
+        users:
+            - name: ubuntu
+              gecos: "Universe"
+              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+              groups: adm, cdrom, dip, plugdev, sudo, docker
+              shell: /bin/bash
+              lock_passwd: False
+
+    late-commands:
+        - curtin in-target -- apt-get update
+        - curtin in-target -- apt-get install -y curl wget
+        - curtin in-target -- curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+        - curtin in-target -- $HOME/.cargo/bin/rustup component add rustfmt clippy
+        - curtin in-target -- bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+        - curtin in-target -- chmod +x /opt/hoppscotch.AppImage
+        - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
