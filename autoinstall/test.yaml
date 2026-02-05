@@ -12,7 +12,7 @@ autoinstall:
         - docker
     user-data:
         users:
-            - name: ubuntu
+            - name: xmars
               gecos: "Universe"
               passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
               groups: adm, cdrom, dip, plugdev, sudo, docker
@@ -22,8 +22,10 @@ autoinstall:
     late-commands:
         - curtin in-target -- apt-get update
         - curtin in-target -- apt-get install -y curl wget
-        - curtin in-target -- curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        - curtin in-target -- $HOME/.cargo/bin/rustup component add rustfmt clippy
+
+        - curtin in-target -- bash -lc "su - xmars -c \"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y\""
+        - curtin in-target -- bash -lc "su - xmars -c \"source ~/.cargo/env && rustup component add rustfmt clippy\""
+
         - curtin in-target -- bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
         - curtin in-target -- chmod +x /opt/hoppscotch.AppImage
         - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
