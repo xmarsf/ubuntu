@@ -1,12 +1,6 @@
 autoinstall:
     version: 1
 
-    identity:
-        realname: "Universe"
-        username: xmars
-        password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-        hostname: universe
-
     packages:
         - docker.io
         - docker-compose-v2
@@ -27,30 +21,33 @@ autoinstall:
         - name: remmina
 
     late-commands:
-        # Disable unattended upgrades => TODO: enable later after finish installation
+        # Disable unattended upgrades (OK here)
         - curtin in-target -- systemctl stop unattended-upgrades
         - curtin in-target -- systemctl disable unattended-upgrades
 
-        # Add curl & libfuse2 (needed for AppImages to run)
+        # Packages needed for AppImages
         - curtin in-target -- apt-get update
         - curtin in-target -- apt-get install -y curl libfuse2
 
-        # Enable and start Docker
+        # Docker service can be enabled here (doesn't require user)
         - curtin in-target -- systemctl enable docker
         - curtin in-target -- systemctl start docker
 
-        # FIXME: check this command first to add user xmars to group, is it work?
-        # Add xmars to docker group by editing /etc/group directly
-        - sed -i 's/^docker:.*/&,xmars/' /target/etc/group
+    user-data:
+        users:
+            - name: xmars
+              gecos: "universe"
+              shell: /bin/bash
+              lock_passwd: false
+              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+              groups: [adm, sudo, docker]
 
-        # Allow Docker without sudo
-        - curtin in-target -- usermod -aG docker xmars
+        runcmd:
+            # Install Rust as the user (first boot; user exists)
+            - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+            - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
 
-        # Install Rust (latest) via rustup, non-interactive
-        - curtin in-target -- sh -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-        - curtin in-target -- su - xmars -c "$HOME/.cargo/bin/rustup component add rustfmt clippy"
-
-        # Install Hoppscotch (AppImage)
-        - curtin in-target -- curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage
-        - curtin in-target -- chmod +x /opt/hoppscotch.AppImage
-        - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+            # Hoppscotch AppImage
+            - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+            - chmod +x /opt/hoppscotch.AppImage
+            - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
