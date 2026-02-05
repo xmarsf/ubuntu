@@ -12,18 +12,7 @@ autoinstall:
         - docker-compose-v2
 
     snaps:
-        - name: pycharm
-          classic: true
-        - name: datagrip
-          classic: true
-        - name: rustrover
-          classic: true
-        - name: code
-          classic: true
         - name: vault
-        - name: bitwarden
-        - name: postman
-        - name: gitlab
 
     late-commands:
         # Disable unattended upgrades => TODO: enable later after finish installation
