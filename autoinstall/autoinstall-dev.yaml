@@ -1,91 +1,92 @@
 autoinstall:
-  version: 1
+    version: 1
 
-  packages:
-    - docker.io
-    - docker-compose-v2
-    - curl
-    - libfuse2
+    packages:
+        - docker.io
+        - docker-compose-v2
+        - curl
+        - libfuse2
 
-  late-commands:
-    - |
-      curtin in-target -- bash -c 'systemctl stop unattended-upgrades || true'
-    - |
-      curtin in-target -- bash -c 'systemctl disable unattended-upgrades || true'
+    late-commands:
+        # Make late-commands resilient: ALWAYS run through a shell so "|| true" works
+        - curtin in-target -- sh -c 'systemctl stop unattended-upgrades || true'
+        - curtin in-target -- sh -c 'systemctl disable unattended-upgrades || true'
 
-    - |
-      curtin in-target -- bash -c 'systemctl enable docker || true'
-    - |
-      curtin in-target -- bash -c 'systemctl start docker || true'
+        # Enable/start Docker (no user required)
+        - curtin in-target -- sh -c 'systemctl enable docker || true'
+        - curtin in-target -- sh -c 'systemctl start docker || true'
 
-    # Remove cloud-init disable marker now (in target)
-    - |
-      curtin in-target -- bash -c 'rm -f /etc/cloud/cloud-init.disabled || true'
+        # Ensure cloud-init is NOT disabled on first boot:
+        # 1) Remove the marker in the target
+        - curtin in-target -- sh -c 'rm -f /etc/cloud/cloud-init.disabled || true'
 
-    # Also remove it again on first boot (in case it gets recreated late)
-    - |
-      curtin in-target -- bash -c '
-        set -e
-        cat > /etc/systemd/system/enable-cloud-init.service <<'\''EOF'\''
-[Unit]
-Description=Remove cloud-init disable marker
-DefaultDependencies=no
-After=local-fs.target
-Before=cloud-init-local.service
+        # 2) Add a one-shot systemd service to remove it again on first boot
+        #    WE USE THE PIPE "|" TO START A MULTI-LINE YAML BLOCK HERE
+        - |
+            curtin in-target -- sh -c 'cat >/etc/systemd/system/enable-cloud-init.service <<EOF
+            [Unit]
+            Description=Remove cloud-init disable marker
+            DefaultDependencies=no
+            After=local-fs.target
+            Before=cloud-init-local.service
 
-[Service]
-Type=oneshot
-ExecStart=/bin/rm -f /etc/cloud/cloud-init.disabled
-ExecStart=/bin/systemctl disable enable-cloud-init.service
+            [Service]
+            Type=oneshot
+            ExecStart=/bin/rm -f /etc/cloud/cloud-init.disabled
+            ExecStart=/bin/systemctl disable enable-cloud-init.service
 
-[Install]
-WantedBy=multi-user.target
-EOF
-        systemctl enable enable-cloud-init.service
-      '
+            [Install]
+            WantedBy=multi-user.target
+            EOF'
+        - curtin in-target -- sh -c 'systemctl enable enable-cloud-init.service'
 
-  user-data:
-    hostname: universe
-    preserve_hostname: false
+    user-data:
+        hostname: universe
+        preserve_hostname: false
 
-    users:
-      - name: xmars
-        gecos: "Universe"
-        shell: /bin/bash
-        lock_passwd: false
-        passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-        groups: [adm, sudo, docker]
-        # If you want passwordless sudo, uncomment:
-        # sudo: "ALL=(ALL) NOPASSWD:ALL"
+        users:
+            - name: xmars
+              gecos: "Universe"
+              shell: /bin/bash
+              lock_passwd: false
+              # Ensure this hash is generated with `mkpasswd -m yescrypt` (Ubuntu 22.04+)
+              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+              groups: [adm, sudo, docker]
+              # Uncomment if you want passwordless sudo:
+              # sudo: "ALL=(ALL) NOPASSWD:ALL"
 
-    runcmd:
-      - |
-        bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
-      - |
-        bash -lc "snap wait system seed.loaded"
+        # Optimization: Use the 'snaps' module instead of runcmd for cleaner syntax
+        # (Though runcmd is still valid, snaps is preferred for timing)
+        snaps:
+            - { name: pycharm, classic: true }
+            - { name: datagrip, classic: true }
+            - { name: rustrover, classic: true }
+            - { name: code, classic: true }
+            - { name: vault }
+            - { name: bitwarden }
+            - { name: postman }
+            # WARNING: 'gitlab' snap is often deprecated or bare. Did you mean a runner?
+            # - {name: gitlab}
+            - { name: remmina }
+            - { name: libreoffice }
 
-      - snap install pycharm --classic
-      - snap install datagrip --classic
-      - snap install rustrover --classic
-      - snap install code --classic
+        runcmd:
+            # Wait for network (laptops often bring Wi-Fi up late)
+            - bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
 
-      - snap install vault
-      - snap install bitwarden
-      - snap install postman
-      - snap install gitlab
-      - snap install remmina
+            # Wait for snap pre-seeding is handled automatically by the 'snaps' module above
+            # But kept here for the manual commands below
+            - bash -lc "snap wait system seed.loaded"
 
-      - |
-        sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-      - |
-        sudo -u xmars -H bash -lc "\$HOME/.cargo/bin/rustup component add rustfmt clippy"
+            # Rust as xmars (install into /home/xmars)
+            - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+            - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
 
-      - |
-        bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
-      - chmod +x /opt/hoppscotch.AppImage
-      - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+            # Hoppscotch AppImage
+            - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+            - chmod +x /opt/hoppscotch.AppImage
+            - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
 
-      - |
-        systemctl enable unattended-upgrades || true
-      - |
-        systemctl start unattended-upgrades || true
+            # Re-enable unattended upgrades after first-boot setup
+            - systemctl enable unattended-upgrades || true
+            - systemctl start unattended-upgrades || true
