@@ -7,6 +7,9 @@ autoinstall:
         - docker-compose-v2
         - curl
         - libfuse2
+        - git
+        - wget
+        - libreoffice
 
     storage:
         layout:
