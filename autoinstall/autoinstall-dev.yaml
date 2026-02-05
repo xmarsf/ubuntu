@@ -8,21 +8,25 @@ autoinstall:
     - libfuse2
 
   late-commands:
-    # Make late-commands resilient: ALWAYS run through a shell so "|| true" works
-    - curtin in-target -- sh -c 'systemctl stop unattended-upgrades || true'
-    - curtin in-target -- sh -c 'systemctl disable unattended-upgrades || true'
+    - |
+      curtin in-target -- bash -c 'systemctl stop unattended-upgrades || true'
+    - |
+      curtin in-target -- bash -c 'systemctl disable unattended-upgrades || true'
 
-    # Enable/start Docker (no user required)
-    - curtin in-target -- sh -c 'systemctl enable docker || true'
-    - curtin in-target -- sh -c 'systemctl start docker || true'
+    - |
+      curtin in-target -- bash -c 'systemctl enable docker || true'
+    - |
+      curtin in-target -- bash -c 'systemctl start docker || true'
 
-    # Ensure cloud-init is NOT disabled on first boot:
-    # 1) Remove the marker in the target
-    - curtin in-target -- sh -c 'rm -f /etc/cloud/cloud-init.disabled || true'
+    # Remove cloud-init disable marker now (in target)
+    - |
+      curtin in-target -- bash -c 'rm -f /etc/cloud/cloud-init.disabled || true'
 
-    # 2) Add a one-shot systemd service to remove it again on first boot
-    #    (some Desktop installs/templates can recreate the marker late)
-    - curtin in-target -- sh -c 'cat >/etc/systemd/system/enable-cloud-init.service <<EOF
+    # Also remove it again on first boot (in case it gets recreated late)
+    - |
+      curtin in-target -- bash -c '
+        set -e
+        cat > /etc/systemd/system/enable-cloud-init.service <<'\''EOF'\''
 [Unit]
 Description=Remove cloud-init disable marker
 DefaultDependencies=no
@@ -36,8 +40,9 @@ ExecStart=/bin/systemctl disable enable-cloud-init.service
 
 [Install]
 WantedBy=multi-user.target
-EOF'
-    - curtin in-target -- sh -c 'systemctl enable enable-cloud-init.service'
+EOF
+        systemctl enable enable-cloud-init.service
+      '
 
   user-data:
     hostname: universe
@@ -50,39 +55,37 @@ EOF'
         lock_passwd: false
         passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
         groups: [adm, sudo, docker]
-        # Uncomment if you want passwordless sudo:
+        # If you want passwordless sudo, uncomment:
         # sudo: "ALL=(ALL) NOPASSWD:ALL"
 
     runcmd:
-      # Wait for network (laptops often bring Wi-Fi up late)
-      - bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
+      - |
+        bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
+      - |
+        bash -lc "snap wait system seed.loaded"
 
-      # Wait for snap pre-seeding to complete before installing snaps
-      - bash -lc "snap wait system seed.loaded"
-
-      # IDE snaps
       - snap install pycharm --classic
       - snap install datagrip --classic
       - snap install rustrover --classic
       - snap install code --classic
 
-      # Other snaps
       - snap install vault
       - snap install bitwarden
       - snap install postman
       - snap install gitlab
       - snap install remmina
-      - snap install libreoffice
 
-      # Rust as xmars (install into /home/xmars)
-      - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-      - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
+      - |
+        sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+      - |
+        sudo -u xmars -H bash -lc "\$HOME/.cargo/bin/rustup component add rustfmt clippy"
 
-      # Hoppscotch AppImage
-      - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+      - |
+        bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
       - chmod +x /opt/hoppscotch.AppImage
       - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
 
-      # Re-enable unattended upgrades after first-boot setup
-      - systemctl enable unattended-upgrades || true
-      - systemctl start unattended-upgrades || true
+      - |
+        systemctl enable unattended-upgrades || true
+      - |
+        systemctl start unattended-upgrades || true
