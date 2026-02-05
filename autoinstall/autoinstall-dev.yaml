@@ -11,10 +11,21 @@ autoinstall:
         - docker.io
         - docker-compose-v2
 
+    snaps:
+        - name: pycharm
+          classic: true
+        - name: datagrip
+          classic: true
+        - name: code
+          classic: true
+        - name: vault
+        - name: bitwarden
+        - name: postman
+
     late-commands:
         # Enable and start Docker
         - curtin in-target -- systemctl enable docker
         - curtin in-target -- systemctl start docker
 
-        # Allow non-root Docker usage
+        # Allow Docker without sudo
         - curtin in-target -- usermod -aG docker xmars
