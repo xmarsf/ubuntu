@@ -22,7 +22,7 @@ autoinstall:
     late-commands:
         - curtin in-target -- apt-get update
         - curtin in-target -- apt-get install -y curl wget
-
+        # FIXME: user xmars didn't exist here, so try to install by sudo and let's xmars use rust later?
         - curtin in-target -- bash -lc "su - xmars -c \"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y\""
         - curtin in-target -- bash -lc "su - xmars -c \"source ~/.cargo/env && rustup component add rustfmt clippy\""
 
