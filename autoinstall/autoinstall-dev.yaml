@@ -16,16 +16,26 @@ autoinstall:
           classic: true
         - name: datagrip
           classic: true
+        - name: rustrover
+          classic: true
         - name: code
           classic: true
         - name: vault
         - name: bitwarden
         - name: postman
+        - name: gitlab
 
     late-commands:
+        # Disable unattended upgrades => TODO: enable later after finish installation
+        - curtin in-target -- systemctl stop unattended-upgrades
+        - curtin in-target -- systemctl disable unattended-upgrades
         # Enable and start Docker
         - curtin in-target -- systemctl enable docker
         - curtin in-target -- systemctl start docker
 
         # Allow Docker without sudo
         - curtin in-target -- usermod -aG docker xmars
+
+        # Install Rust (latest) via rustup, non-interactive
+        - curtin in-target -- sh -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+        - curtin in-target -- su - xmars -c "$HOME/.cargo/bin/rustup component add rustfmt clippy"
