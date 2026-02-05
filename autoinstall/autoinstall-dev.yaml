@@ -1,9 +1,20 @@
 autoinstall:
     version: 1
-    source:
-        id: ubuntu-server-minimal
+
     identity:
         realname: "Universe"
         username: xmars
         password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
         hostname: universe
+
+    packages:
+        - docker.io
+        - docker-compose-v2
+
+    late-commands:
+        # Enable and start Docker
+        - curtin in-target -- systemctl enable docker
+        - curtin in-target -- systemctl start docker
+
+        # Allow non-root Docker usage
+        - curtin in-target -- usermod -aG docker xmars
