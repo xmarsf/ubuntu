@@ -4,15 +4,13 @@ autoinstall:
     packages:
         - docker.io
         - docker-compose-v2
+        - curl
+        - libfuse2
 
     late-commands:
-        # Disable unattended upgrades (OK here)
-        - curtin in-target -- systemctl stop unattended-upgrades
-        - curtin in-target -- systemctl disable unattended-upgrades
-
-        # Packages needed for AppImages
-        - curtin in-target -- apt-get update
-        - curtin in-target -- apt-get install -y curl libfuse2
+        # Avoid aborting install if service state is unexpected
+        - curtin in-target -- systemctl stop unattended-upgrades || true
+        - curtin in-target -- systemctl disable unattended-upgrades || true
 
         # Docker service can be enabled here (doesn't require user)
         - curtin in-target -- systemctl enable docker
@@ -26,23 +24,27 @@ autoinstall:
               lock_passwd: false
               passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
               groups: [adm, sudo, docker]
+              # optional:
+              # sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
-            # --- wait until snapd is 100% ready ---
+            # wait until snapd is ready
             - bash -lc "until snap system >/dev/null 2>&1; do sleep 5; done"
 
-            # --- IDE snaps (Desktop-safe timing) ---
+            # IDE snaps
             - snap install pycharm --classic
             - snap install datagrip --classic
             - snap install rustrover --classic
             - snap install code --classic
+
+            # other snaps
             - snap install vault
             - snap install bitwarden
             - snap install postman
             - snap install gitlab
             - snap install remmina
 
-            # Install Rust as the user (first boot; user exists)
+            # Rust as xmars
             - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
             - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
 
@@ -51,6 +53,6 @@ autoinstall:
             - chmod +x /opt/hoppscotch.AppImage
             - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
 
-            # Re-enable unattended upgrades
-            - systemctl enable unattended-upgrades
-            - systemctl start unattended-upgrades
+            # Re-enable unattended upgrades (guarded)
+            - systemctl enable unattended-upgrades || true
+            - systemctl start unattended-upgrades || true
