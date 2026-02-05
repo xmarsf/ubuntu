@@ -1,30 +1,91 @@
 autoinstall:
-    version: 1
+  version: 1
 
-    identity:
-        realname: "Universe"
-        username: xmars
-        password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-        hostname: universe
+  packages:
+    - docker.io
+    - docker-compose-v2
+    - curl
+    - libfuse2
 
-    packages:
-        - docker.io
-        - docker-compose-v2
+  late-commands:
+    - |
+      curtin in-target -- bash -c 'systemctl stop unattended-upgrades || true'
+    - |
+      curtin in-target -- bash -c 'systemctl disable unattended-upgrades || true'
 
-    snaps:
-        - name: vault
+    - |
+      curtin in-target -- bash -c 'systemctl enable docker || true'
+    - |
+      curtin in-target -- bash -c 'systemctl start docker || true'
 
-    late-commands:
-        # Disable unattended upgrades => TODO: enable later after finish installation
-        - curtin in-target -- systemctl stop unattended-upgrades
-        - curtin in-target -- systemctl disable unattended-upgrades
-        # Enable and start Docker
-        - curtin in-target -- systemctl enable docker
-        - curtin in-target -- systemctl start docker
+    # Remove cloud-init disable marker now (in target)
+    - |
+      curtin in-target -- bash -c 'rm -f /etc/cloud/cloud-init.disabled || true'
 
-        # Allow Docker without sudo
-        - curtin in-target -- usermod -aG docker xmars
+    # Also remove it again on first boot (in case it gets recreated late)
+    - |
+      curtin in-target -- bash -c '
+        set -e
+        cat > /etc/systemd/system/enable-cloud-init.service <<'\''EOF'\''
+[Unit]
+Description=Remove cloud-init disable marker
+DefaultDependencies=no
+After=local-fs.target
+Before=cloud-init-local.service
 
-        # Install Rust (latest) via rustup, non-interactive
-        - curtin in-target -- sh -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-        - curtin in-target -- su - xmars -c "$HOME/.cargo/bin/rustup component add rustfmt clippy"
+[Service]
+Type=oneshot
+ExecStart=/bin/rm -f /etc/cloud/cloud-init.disabled
+ExecStart=/bin/systemctl disable enable-cloud-init.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        systemctl enable enable-cloud-init.service
+      '
+
+  user-data:
+    hostname: universe
+    preserve_hostname: false
+
+    users:
+      - name: xmars
+        gecos: "Universe"
+        shell: /bin/bash
+        lock_passwd: false
+        passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+        groups: [adm, sudo, docker]
+        # If you want passwordless sudo, uncomment:
+        # sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+    runcmd:
+      - |
+        bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
+      - |
+        bash -lc "snap wait system seed.loaded"
+
+      - snap install pycharm --classic
+      - snap install datagrip --classic
+      - snap install rustrover --classic
+      - snap install code --classic
+
+      - snap install vault
+      - snap install bitwarden
+      - snap install postman
+      - snap install gitlab
+      - snap install remmina
+
+      - |
+        sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+      - |
+        sudo -u xmars -H bash -lc "\$HOME/.cargo/bin/rustup component add rustfmt clippy"
+
+      - |
+        bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+      - chmod +x /opt/hoppscotch.AppImage
+      - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+
+      - |
+        systemctl enable unattended-upgrades || true
+      - |
+        systemctl start unattended-upgrades || true
