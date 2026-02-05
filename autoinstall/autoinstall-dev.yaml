@@ -52,7 +52,6 @@ autoinstall:
               # Ensure this hash is generated with `mkpasswd -m yescrypt` (Ubuntu 22.04+)
               passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
               groups: [adm, sudo, docker]
-              Uncomment if you want passwordless sudo:
               sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
