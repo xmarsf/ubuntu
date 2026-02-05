@@ -1,3 +1,4 @@
+#cloud-config
 autoinstall:
     version: 1
 
@@ -6,6 +7,11 @@ autoinstall:
         - docker-compose-v2
         - curl
         - libfuse2
+
+    storage:
+        layout:
+            name: lvm
+            sizing-policy: all
 
     late-commands:
         # Make late-commands resilient: ALWAYS run through a shell so "|| true" works
