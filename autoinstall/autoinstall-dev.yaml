@@ -20,6 +20,8 @@ autoinstall:
         - curtin in-target -- rm -f /etc/cloud/cloud-init.disabled
 
     user-data:
+        hostname: universe
+        preserve_hostname: false
         users:
             - name: xmars
               gecos: "universe"
