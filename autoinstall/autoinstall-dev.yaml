@@ -43,6 +43,20 @@ autoinstall:
               groups: [adm, sudo, docker]
 
         runcmd:
+            # --- wait until snapd is 100% ready ---
+            - bash -lc "until snap system >/dev/null 2>&1; do sleep 5; done"
+
+            # --- IDE snaps (Desktop-safe timing) ---
+            - snap install pycharm --classic
+            - snap install datagrip --classic
+            - snap install rustrover --classic
+            - snap install code --classic
+            - snap install vault
+            - snap install bitwarden
+            - snap install postman
+            - snap install gitlab
+            - snap install remmina
+
             # Install Rust as the user (first boot; user exists)
             - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
             - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
@@ -51,3 +65,7 @@ autoinstall:
             - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
             - chmod +x /opt/hoppscotch.AppImage
             - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+
+            # Re-enable unattended upgrades
+            - systemctl enable unattended-upgrades
+            - systemctl start unattended-upgrades
