@@ -1,64 +1,88 @@
 autoinstall:
-    version: 1
+  version: 1
 
-    packages:
-        - docker.io
-        - docker-compose-v2
-        - curl
-        - libfuse2
+  packages:
+    - docker.io
+    - docker-compose-v2
+    - curl
+    - libfuse2
 
-    late-commands:
-        # Avoid aborting install if service state is unexpected
-        - curtin in-target -- systemctl stop unattended-upgrades || true
-        - curtin in-target -- systemctl disable unattended-upgrades || true
+  late-commands:
+    # Make late-commands resilient: ALWAYS run through a shell so "|| true" works
+    - curtin in-target -- sh -c 'systemctl stop unattended-upgrades || true'
+    - curtin in-target -- sh -c 'systemctl disable unattended-upgrades || true'
 
-        # Docker service can be enabled here (doesn't require user)
-        - curtin in-target -- systemctl enable docker
-        - curtin in-target -- systemctl start docker
+    # Enable/start Docker (no user required)
+    - curtin in-target -- sh -c 'systemctl enable docker || true'
+    - curtin in-target -- sh -c 'systemctl start docker || true'
 
-        # IMPORTANT: allow cloud-init to run on first boot
-        - curtin in-target -- rm -f /etc/cloud/cloud-init.disabled
+    # Ensure cloud-init is NOT disabled on first boot:
+    # 1) Remove the marker in the target
+    - curtin in-target -- sh -c 'rm -f /etc/cloud/cloud-init.disabled || true'
 
-    user-data:
-        hostname: universe
-        preserve_hostname: false
-        users:
-            - name: xmars
-              gecos: "universe"
-              shell: /bin/bash
-              lock_passwd: false
-              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-              groups: [adm, sudo, docker]
-              # optional:
-              # sudo: "ALL=(ALL) NOPASSWD:ALL"
+    # 2) Add a one-shot systemd service to remove it again on first boot
+    #    (some Desktop installs/templates can recreate the marker late)
+    - curtin in-target -- sh -c 'cat >/etc/systemd/system/enable-cloud-init.service <<EOF
+[Unit]
+Description=Remove cloud-init disable marker
+DefaultDependencies=no
+After=local-fs.target
+Before=cloud-init-local.service
 
-        runcmd:
-            # wait until snapd is ready
-            - bash -lc "snap wait system seed.loaded"
-            - bash -lc "until snap system >/dev/null 2>&1; do sleep 5; done"
+[Service]
+Type=oneshot
+ExecStart=/bin/rm -f /etc/cloud/cloud-init.disabled
+ExecStart=/bin/systemctl disable enable-cloud-init.service
 
-            # IDE snaps
-            - snap install pycharm --classic
-            - snap install datagrip --classic
-            - snap install rustrover --classic
-            - snap install code --classic
+[Install]
+WantedBy=multi-user.target
+EOF'
+    - curtin in-target -- sh -c 'systemctl enable enable-cloud-init.service'
 
-            # other snaps
-            - snap install vault
-            - snap install bitwarden
-            - snap install postman
-            - snap install gitlab
-            - snap install remmina
+  user-data:
+    hostname: universe
+    preserve_hostname: false
 
-            # Rust as xmars
-            - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-            - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
+    users:
+      - name: xmars
+        gecos: "Universe"
+        shell: /bin/bash
+        lock_passwd: false
+        passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+        groups: [adm, sudo, docker]
+        # Uncomment if you want passwordless sudo:
+        # sudo: "ALL=(ALL) NOPASSWD:ALL"
 
-            # Hoppscotch AppImage
-            - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
-            - chmod +x /opt/hoppscotch.AppImage
-            - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+    runcmd:
+      # Wait for network (laptops often bring Wi-Fi up late)
+      - bash -lc "command -v nm-online >/dev/null 2>&1 && nm-online -t 180 || true"
 
-            # Re-enable unattended upgrades (guarded)
-            - systemctl enable unattended-upgrades || true
-            - systemctl start unattended-upgrades || true
+      # Wait for snap pre-seeding to complete before installing snaps
+      - bash -lc "snap wait system seed.loaded"
+
+      # IDE snaps
+      - snap install pycharm --classic
+      - snap install datagrip --classic
+      - snap install rustrover --classic
+      - snap install code --classic
+
+      # Other snaps
+      - snap install vault
+      - snap install bitwarden
+      - snap install postman
+      - snap install gitlab
+      - snap install remmina
+      - snap install libreoffice
+
+      # Rust as xmars (install into /home/xmars)
+      - sudo -u xmars -H bash -lc "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+      - sudo -u xmars -H bash -lc "$HOME/.cargo/bin/rustup component add rustfmt clippy"
+
+      # Hoppscotch AppImage
+      - bash -lc "curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage"
+      - chmod +x /opt/hoppscotch.AppImage
+      - ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+
+      # Re-enable unattended upgrades after first-boot setup
+      - systemctl enable unattended-upgrades || true
+      - systemctl start unattended-upgrades || true
