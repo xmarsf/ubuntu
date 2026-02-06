@@ -13,8 +13,6 @@ autoinstall:
         layout:
             name: lvm
             sizing-policy: all
-    groups:
-        - docker
 
     # late-commands:
     #     - curtin in-target -- apt-get update
@@ -33,7 +31,7 @@ autoinstall:
     #     - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
 
     late-commands:
-        - curtin in-target -- bash -lc "id xmars >/dev/null 2>&1 || useradd -m -s /bin/bash -G adm,cdrom,dip,plugdev,sudo,docker xmars"
+        - curtin in-target -- bash -lc "id xmars >/dev/null 2>&1 || useradd -m -s /bin/bash -G adm,cdrom,dip,plugdev,sudo xmars"
         - curtin in-target -- bash -lc "usermod -p '$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2' xmars"
 
         # Install rustup + components as xmars (pipe must be inside bash -lc)
