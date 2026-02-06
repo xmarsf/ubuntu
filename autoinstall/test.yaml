@@ -30,10 +30,8 @@ autoinstall:
     #     - curtin in-target -- chmod +x /opt/hoppscotch.AppImage
     #     - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
 
-    late-commands:
-        - curtin in-target -- bash -lc "id xmars >/dev/null 2>&1 || useradd -m -s /bin/bash -G adm,cdrom,dip,plugdev,sudo xmars"
-        - curtin in-target -- bash -lc "usermod -p '$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2' xmars"
-
-        # Install rustup + components as xmars (pipe must be inside bash -lc)
-        - curtin in-target -- bash -lc "su - xmars -c \"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y\""
-        - curtin in-target -- bash -lc "su - xmars -c \"/home/xmars/.cargo/bin/rustup component add rustfmt clippy\""
+    runcmd:
+        - su - xmars -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+        - echo $HOME
+        - ls -lah /home
+        - su - xmars -c "/home/xmars/.cargo/bin/rustup component add rustfmt clippy"
