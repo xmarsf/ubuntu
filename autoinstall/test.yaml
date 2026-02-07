@@ -31,6 +31,7 @@ autoinstall:
         runcmd:
             - [ sudo, -u, xmars, -i, bash, -c, "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y" ]
             - [ sudo, -u, xmars, -i, bash, -c, "/home/xmars/.cargo/bin/rustup component add rustfmt clippy" ]
+            - [ hostnamectl, set-hostname, universe ]
 
     # late-commands:
     #     # 1. Install Rust for the specific user 'xmars'
