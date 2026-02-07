@@ -26,10 +26,11 @@ autoinstall:
               groups: adm, cdrom, dip, lxd, plugdev, sudo, docker
               shell: /bin/bash
               lock_passwd: False
+              sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
-            - "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-            - "$HOME/.cargo/bin/rustup component add rustfmt clippy"
+            - [ sudo, -u, xmars, -i, bash, -c, "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y" ]
+            - [ sudo, -u, xmars, -i, bash, -c, "/home/xmars/.cargo/bin/rustup component add rustfmt clippy" ]
 
     # late-commands:
     #     # 1. Install Rust for the specific user 'xmars'
