@@ -14,7 +14,12 @@ autoinstall:
         - git
         - wget
         - libreoffice
-
+    storage:
+        layout:
+            name: lvm
+            sizing-policy: all
+    groups:
+        - docker
     snaps:
         - name: pycharm
           classic: true
