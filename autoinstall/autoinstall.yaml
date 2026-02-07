@@ -28,7 +28,20 @@ autoinstall:
         - name: bitwarden
         - name: postman
         - name: gitlab
+    user-data:
+        users:
+            - name: xmars
+              gecos: "Universe"
+              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+              groups: adm, cdrom, dip, lxd, plugdev, sudo, docker
+              shell: /bin/bash
+              lock_passwd: False
+              sudo: "ALL=(ALL) NOPASSWD:ALL"
 
+        runcmd:
+            - [sudo, -u, xmars, -i, bash, -c, "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"]
+            - [sudo, -u, xmars, -i, bash, -c, "/home/xmars/.cargo/bin/rustup component add rustfmt clippy"]
+            - [hostnamectl, set-hostname, universe]
     codecs:
         install: true
     drivers:
