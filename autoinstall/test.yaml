@@ -44,3 +44,6 @@ autoinstall:
             # Execute the script as root (it uses 'sudo -u xmars' internally)
             echo "[Cloud-Init] Executing install script..."
             /bin/bash "$SCRIPT_PATH"
+
+# TODO: INSTALL VIETNAME KEYBOARD
+# https://github.com/fcitx/fcitx5-unikey
