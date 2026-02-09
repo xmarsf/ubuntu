@@ -11,6 +11,11 @@ autoinstall:
         - libfuse2
         - gir1.2-gtop-2.0
         - dbus-x11
+
+        - fcitx5
+        - fcitx5-unikey
+        - fcitx5-frontend-gtk3
+        - fcitx5-frontend-qt5
     storage:
         layout:
             name: lvm
@@ -45,5 +50,38 @@ autoinstall:
             echo "[Cloud-Init] Executing install script..."
             /bin/bash "$SCRIPT_PATH"
 
+    late-commands:
+        # 1. Set System-wide Environment Variables
+        - curtin in-target -- bash -c "cat <<EOF >> /etc/environment
+INPUT_METHOD=fcitx5
+GTK_IM_MODULE=fcitx5
+QT_IM_MODULE=fcitx5
+XMODIFIERS=@im=fcitx5
+EOF"
+
+        # 2. Create the Fcitx5 config directory for xmars
+        - curtin in-target -- mkdir -p /home/xmars/.config/fcitx5
+
+        # 3. Pre-configure Unikey as the active input method
+        - curtin in-target -- bash -c "cat <<EOF > /home/xmars/.config/fcitx5/profile
+[Groups/0]
+Name=Default
+Default Layout=us
+Default IM=unikey
+
+[Groups/0/Items/0]
+Name=keyboard-us
+Layout=
+
+[Groups/0/Items/1]
+Name=unikey
+Layout=
+
+[GroupList]
+0=Default
+EOF"
+
+        # 4. Set correct ownership to xmars
+        - curtin in-target -- chown -R xmars:xmars /home/xmars/.config/fcitx5
 # TODO: INSTALL VIETNAME KEYBOARD
 # https://github.com/fcitx/fcitx5-unikey
