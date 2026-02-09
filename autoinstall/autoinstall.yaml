@@ -34,6 +34,7 @@ autoinstall:
         - name: bitwarden
         - name: postman
         - name: gitlab
+        - name: telegram-desktop
     user-data:
         users:
             - name: xmars
