@@ -1,69 +1,56 @@
 #cloud-config
 autoinstall:
-    version: 1
-    # identity:
-    #     realname: "Universe"
-    #     username: xmars
-    #     password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-    #     hostname: universe
-    packages:
-        - curl
-        - libfuse2
-        - gir1.2-gtop-2.0
-        - dbus-x11
+  version: 1
+  # Subiquity requires these identity fields to be active
+#   identity:
+#     realname: "Universe"
+#     username: xmars
+#     password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+#     hostname: universe
+  
+  ssh:
+    install-server: true
+    allow-pw: true
 
-        - fcitx5
-        - fcitx5-unikey
-        - fcitx5-frontend-gtk3
-        - fcitx5-frontend-qt5
-    storage:
-        layout:
-            name: lvm
-            sizing-policy: all
-    groups:
-        - docker
+  packages:
+    - curl
+    - libfuse2
+    - gir1.2-gtop-2.0
+    - dbus-x11
+    - fcitx5
+    - fcitx5-unikey
+    - fcitx5-frontend-gtk3
+    - fcitx5-frontend-qt5
+    
+  storage:
+    layout:
+      name: lvm
+      sizing-policy: all
 
-    user-data:
-        users:
-            - name: xmars
-              gecos: "Universe"
-              passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-              groups: adm, cdrom, dip, lxd, plugdev, sudo, docker
-              shell: /bin/bash
-              lock_passwd: False
-              sudo: "ALL=(ALL) NOPASSWD:ALL"
+  user-data:
+    users:
+      - name: xmars
+        gecos: "Universe"
+        passwd: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
+        groups: [adm, cdrom, dip, lxd, plugdev, sudo, docker]
+        shell: /bin/bash
+        lock_passwd: False
+        sudo: "ALL=(ALL) NOPASSWD:ALL"
 
-    runcmd:
-        - |
-            set -euo pipefail
-            # Target path for your installation logic
-            SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
-            SCRIPT_PATH="/usr/local/bin/autoinstall-script.sh"
-
-            # Ensure directory exists and download script
-            mkdir -p "$(dirname "$SCRIPT_PATH")"
-            echo "[Cloud-Init] Downloading install script from GitHub..."
-            curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-            chmod +x "$SCRIPT_PATH"
-
-            # Execute the script as root (it uses 'sudo -u xmars' internally)
-            echo "[Cloud-Init] Executing install script..."
-            /bin/bash "$SCRIPT_PATH"
-
-    late-commands:
-        # 1. Set System-wide Environment Variables
-        - curtin in-target -- bash -c "cat <<EOF >> /etc/environment
+  late-commands:
+    # 1. Set System-wide Environment Variables
+    - curtin in-target -- bash -c "cat <<EOF >> /etc/environment
 INPUT_METHOD=fcitx5
 GTK_IM_MODULE=fcitx5
 QT_IM_MODULE=fcitx5
 XMODIFIERS=@im=fcitx5
 EOF"
 
-        # 2. Create the Fcitx5 config directory for xmars
-        - curtin in-target -- mkdir -p /home/xmars/.config/fcitx5
+    # 2. Create the Fcitx5 config directory for xmars
+    - curtin in-target -- mkdir -p /home/xmars/.config/fcitx5
 
-        # 3. Pre-configure Unikey as the active input method
-        - curtin in-target -- bash -c "cat <<EOF > /home/xmars/.config/fcitx5/profile
+    # 3. Pre-configure Unikey as the active input method
+    - curtin in-target -- bash -c "cat <<EOF > /home/xmars/.config/fcitx5/profile
 [Groups/0]
 Name=Default
 Default Layout=us
@@ -81,7 +68,17 @@ Layout=
 0=Default
 EOF"
 
-        # 4. Set correct ownership to xmars
-        - curtin in-target -- chown -R xmars:xmars /home/xmars/.config/fcitx5
-# TODO: INSTALL VIETNAME KEYBOARD
-# https://github.com/fcitx/fcitx5-unikey
+    # 4. Set correct ownership to xmars
+    - curtin in-target -- chown -R xmars:xmars /home/xmars/.config/fcitx5
+
+    # 5. Execute your custom setup script (Moved from runcmd to late-commands for better reliability)
+    - |
+      curtin in-target -- bash -c "
+      set -euo pipefail
+      SCRIPT_URL='https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh'
+      SCRIPT_PATH='/usr/local/bin/autoinstall-script.sh'
+      mkdir -p \"\$(dirname \"\$SCRIPT_PATH\")\"
+      curl -fsSL \"\$SCRIPT_URL\" -o \"\$SCRIPT_PATH\"
+      chmod +x \"\$SCRIPT_PATH\"
+      /bin/bash \"\$SCRIPT_PATH\"
+      "
