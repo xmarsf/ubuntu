@@ -13,7 +13,7 @@ set -euo pipefail
 #   ./clone_odoo_versions.sh /path/to/odoo-versions
 # If no path is given, defaults to ./odoo-versions
 
-BASE_DIR="${1:-./odoo-versions}"
+BASE_DIR="${1:-/home/xmars/dev/odoo}"
 
 # Map branch -> folder name
 declare -A VERSIONS=(
@@ -28,7 +28,7 @@ REPO_URL="https://github.com/odoo/odoo.git"
 mkdir -p "$BASE_DIR"
 
 for branch in "${!VERSIONS[@]}"; do
-  folder="${VERSIONS[$branch]}"
+  folder="ce-${VERSIONS[$branch]}"
   dest="${BASE_DIR}/${folder}"
 
   echo "==> Cloning Odoo ${branch} into: ${dest}"

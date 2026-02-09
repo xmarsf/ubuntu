@@ -9,8 +9,6 @@ autoinstall:
     packages:
         - curl
         - libfuse2
-        - docker.io
-        - docker-compose-v2
     storage:
         layout:
             name: lvm
@@ -29,18 +27,12 @@ autoinstall:
               sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
-            - [ sudo, -u, xmars, -i, bash, -c, "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y" ]
-            - [ sudo, -u, xmars, -i, bash, -c, "/home/xmars/.cargo/bin/rustup component add rustfmt clippy" ]
-            - [ hostnamectl, set-hostname, universe ]
+            - |
+                set -euo pipefail
+                SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
+                SCRIPT_PATH="/tmp/install.sh"
 
-    # late-commands:
-    #     # 1. Install Rust for the specific user 'xmars'
-    #     - curtin in-target -- sudo -u xmars -i bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+                curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+                chmod +x "$SCRIPT_PATH"
 
-    #     # 2. Add components using the user's rustup
-    #     - curtin in-target -- sudo -u xmars -i bash -c "$HOME/.cargo/bin/rustup component add rustfmt clippy"
-
-    #     # 3. Download Hoppscotch
-    #     - curtin in-target -- curl -L https://github.com/hoppscotch/releases/releases/latest/download/Hoppscotch_linux_x64.AppImage -o /opt/hoppscotch.AppImage
-    #     - curtin in-target -- chmod +x /opt/hoppscotch.AppImage
-    #     - curtin in-target -- ln -sf /opt/hoppscotch.AppImage /usr/local/bin/hoppscotch
+                su - xmars -c "$SCRIPT_PATH"
