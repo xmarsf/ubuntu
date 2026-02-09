@@ -9,6 +9,7 @@ autoinstall:
     packages:
         - curl
         - libfuse2
+        - gir1.2-gtop-2.0
     storage:
         layout:
             name: lvm

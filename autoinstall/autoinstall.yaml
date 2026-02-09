@@ -11,6 +11,7 @@ autoinstall:
         - docker-compose-v2
         - curl
         - libfuse2
+        - gir1.2-gtop-2.0
         - git
         - wget
         - libreoffice
