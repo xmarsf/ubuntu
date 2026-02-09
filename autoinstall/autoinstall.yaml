@@ -7,11 +7,12 @@ autoinstall:
         username: xmars
         password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
     packages:
+        - libfuse2
+        - gir1.2-gtop-2.0
+        - dbus-x11
         - docker.io
         - docker-compose-v2
         - curl
-        - libfuse2
-        - gir1.2-gtop-2.0
         - git
         - wget
         - libreoffice

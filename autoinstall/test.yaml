@@ -10,6 +10,7 @@ autoinstall:
         - curl
         - libfuse2
         - gir1.2-gtop-2.0
+        - dbus-x11
     storage:
         layout:
             name: lvm
@@ -27,13 +28,19 @@ autoinstall:
               lock_passwd: False
               sudo: "ALL=(ALL) NOPASSWD:ALL"
 
-        runcmd:
-            - |
-                set -euo pipefail
-                SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
-                SCRIPT_PATH="/usr/local/bin/autoinstall-script.sh"
+    runcmd:
+        - |
+            set -euo pipefail
+            # Target path for your installation logic
+            SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
+            SCRIPT_PATH="/usr/local/bin/autoinstall-script.sh"
 
-                curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-                chmod +x "$SCRIPT_PATH"
+            # Ensure directory exists and download script
+            mkdir -p "$(dirname "$SCRIPT_PATH")"
+            echo "[Cloud-Init] Downloading install script from GitHub..."
+            curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+            chmod +x "$SCRIPT_PATH"
 
-                su - xmars -c "$SCRIPT_PATH"
+            # Execute the script as root (it uses 'sudo -u xmars' internally)
+            echo "[Cloud-Init] Executing install script..."
+            /bin/bash "$SCRIPT_PATH"
