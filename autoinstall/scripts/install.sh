@@ -84,6 +84,7 @@ install_nodejs_npm() {
     node -v
     npm -v
   '
+  sudo npm install -g rtlcss
 }
 
 install_odoo_community() {
