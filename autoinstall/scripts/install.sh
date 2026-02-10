@@ -132,5 +132,5 @@ EOF
 
 # --- Execution ---
 install_vitals_minimal
-clone_odoo_community_versions
 setup_fcitx5_unikey
+clone_odoo_community_versions
