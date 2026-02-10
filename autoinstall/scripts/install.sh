@@ -42,7 +42,7 @@ install_vitals_minimal() {
     # Configure Vitals preferences
     gsettings set org.gnome.shell.extensions.vitals show-cpu true
     gsettings set org.gnome.shell.extensions.vitals show-memory true
-    gsettings set org.gnome.shell.extensions.vitals show-storage true
+    gsettings set org.gnome.shell.extensions.vitals show-storage false
     gsettings set org.gnome.shell.extensions.vitals show-temperature false
     gsettings set org.gnome.shell.extensions.vitals show-voltage false
     gsettings set org.gnome.shell.extensions.vitals show-fan false
