@@ -77,8 +77,49 @@ clone_odoo_community_versions() {
       "${dest}"
   done
 }
+setup_fcitx5_unikey() {
+    local TARGET_USER="xmars"
+    local TARGET_DIR="/target"
+    local USER_HOME="${TARGET_DIR}/home/${TARGET_USER}"
+    local CONFIG_DIR="${USER_HOME}/.config/fcitx5"
 
+    echo "Configuring Fcitx5-Unikey for ${TARGET_USER}..."
+
+    # 1. Set System-wide Environment Variables in the target OS
+    cat <<EOF >> "${TARGET_DIR}/etc/environment"
+INPUT_METHOD=fcitx5
+GTK_IM_MODULE=fcitx5
+QT_IM_MODULE=fcitx5
+XMODIFIERS=@im=fcitx5
+EOF
+
+    # 2. Create the Fcitx5 config directory
+    mkdir -p "$CONFIG_DIR"
+
+    # 3. Create the profile file to enable Unikey by default
+    cat <<EOF > "${CONFIG_DIR}/profile"
+[Groups/0]
+Name=Default
+Default Layout=us
+Default IM=unikey
+
+[Groups/0/Items/0]
+Name=keyboard-us
+Layout=
+
+[Groups/0/Items/1]
+Name=unikey
+Layout=
+
+[GroupList]
+0=Default
+EOF
+
+    # 4. Correct ownership using chroot to ensure UID/GID match the target system
+    chroot "$TARGET_DIR" chown -R "$TARGET_USER:$TARGET_USER" "/home/${TARGET_USER}/.config"
+}
 # --- Execution ---
 # These are called as root, but perform operations as xmars internally
 install_vitals_minimal
 clone_odoo_community_versions
+setup_fcitx5_unikey
