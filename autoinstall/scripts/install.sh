@@ -80,34 +80,19 @@ clone_odoo_community_versions() {
       "${dest}"
   done
 }
-
 setup_fcitx5_unikey() {
-    # CORRECTED: Running on live system, so TARGET_DIR is empty (root)
-    local TARGET_DIR="" 
-    local USER_HOME="/home/${TARGET_USER}"
+    echo "[Fcitx5] Configuring for ${TARGET_USER}..."
+
+    # 1. Use im-config to set Fcitx5 as the active IM for the user
+    # This creates ~/.xinputrc and ensures GTK/QT modules load correctly on next login.
+    sudo -u "${TARGET_USER}" im-config -n fcitx5
+
+    # 2. Create the Fcitx5 Config Directory
     local CONFIG_DIR="${USER_HOME}/.config/fcitx5"
+    sudo -u "${TARGET_USER}" mkdir -p "${CONFIG_DIR}"
 
-    echo "Configuring Fcitx5-Unikey for ${TARGET_USER}..."
-
-    # 1. Set System-wide Environment Variables
-    # /etc/environment exists at the root now
-    cat <<EOF >> "${TARGET_DIR}/etc/environment"
-INPUT_METHOD=fcitx5
-GTK_IM_MODULE=fcitx5
-QT_IM_MODULE=fcitx5
-XMODIFIERS=@im=fcitx5
-EOF
-
-    # 2. Create the Fcitx5 config directory
-    # Ensure parent dir exists and is owned by user
-    mkdir -p "$(dirname "$CONFIG_DIR")"
-    
-    # Run creation as the user so permissions are correct automatically
-    sudo -u "${TARGET_USER}" mkdir -p "$CONFIG_DIR"
-
-    # 3. Create the profile file
-    # Write as root, then chown, OR write as user. 
-    # Writing as user via tee is cleaner:
+    # 3. Create the Profile (Force Unikey as Default)
+    # This format is standard for Fcitx5.
     cat <<EOF | sudo -u "${TARGET_USER}" tee "${CONFIG_DIR}/profile" > /dev/null
 [Groups/0]
 Name=Default
@@ -126,8 +111,24 @@ Layout=
 0=Default
 EOF
 
-    # 4. Cleanup (Explicit chown no longer strictly needed if done as user, but safe to keep)
-    chown -R "$TARGET_USER:$TARGET_USER" "/home/${TARGET_USER}/.config"
+    # 4. Create an Autostart Entry (Insurance)
+    # Sometimes GNOME doesn't start the IM automatically on the very first run.
+    local AUTOSTART_DIR="${USER_HOME}/.config/autostart"
+    sudo -u "${TARGET_USER}" mkdir -p "${AUTOSTART_DIR}"
+    cp /usr/share/applications/org.fcitx.Fcitx5.desktop "${AUTOSTART_DIR}/"
+    chown "${TARGET_USER}:${TARGET_USER}" "${AUTOSTART_DIR}/org.fcitx.Fcitx5.desktop"
+
+    # 5. Global Environment Variables (Backup)
+    # Even with im-config, these help specific apps (like Electron apps) behave.
+    # Note: These will only apply after a REBOOT.
+    if ! grep -q "INPUT_METHOD=fcitx5" /etc/environment; then
+        cat <<EOF >> /etc/environment
+INPUT_METHOD=fcitx5
+GTK_IM_MODULE=fcitx5
+QT_IM_MODULE=fcitx5
+XMODIFIERS=@im=fcitx5
+EOF
+    fi
 }
 
 # --- Execution ---

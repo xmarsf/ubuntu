@@ -11,6 +11,7 @@ autoinstall:
         - libfuse2
         - gir1.2-gtop-2.0
         - dbus-x11
+        - im-config
         - fcitx5
         - fcitx5-unikey
         - fcitx5-frontend-gtk3
@@ -63,3 +64,4 @@ autoinstall:
                 /bin/bash "$SCRIPT_PATH"
 
                 echo "[Cloud-Init] Finished."
+                reboot
