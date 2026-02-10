@@ -7,26 +7,39 @@ USER_HOME="/home/${TARGET_USER}"
 
 install_vitals_minimal() {
   local EXT_UUID="Vitals@CoreCoding.com"
+  # TARGET_USER and USER_HOME are defined globally in your script
   local EXT_DIR="${USER_HOME}/.local/share/gnome-shell/extensions/${EXT_UUID}"
 
-  echo "[Vitals] Installing GNOME Shell extension for ${TARGET_USER}"
+  echo "[Vitals] Installing GNOME Shell extension for ${TARGET_USER}..."
   
-  # Check if user exists before running sudo
+  # Safety check
   if ! id "$TARGET_USER" &>/dev/null; then
-      echo "User $TARGET_USER does not exist!"
+      echo "Error: User $TARGET_USER does not exist!"
       return 1
   fi
 
+  # 1. Clean and Prepare Directory
   sudo -u "${TARGET_USER}" mkdir -p "$(dirname "${EXT_DIR}")"
   sudo -u "${TARGET_USER}" rm -rf "${EXT_DIR}"
   
+  # 2. Clone Repository
+  echo "[Vitals] Cloning repository..."
   sudo -u "${TARGET_USER}" git clone --depth 1 \
     https://github.com/corecoding/Vitals.git \
     "${EXT_DIR}"
 
+  # 3. Compile Schemas (CRITICAL STEP)
+  # Without this, 'gsettings set' will fail and the extension will error out.
+  echo "[Vitals] Compiling GSettings schemas..."
+  sudo -u "${TARGET_USER}" glib-compile-schemas "${EXT_DIR}/schemas"
+
+  # 4. Configure settings via dbus-run-session
   echo "[Vitals] Configuring metrics..."
-  # dbus-run-session is correct here for cloud-init context
   sudo -u "${TARGET_USER}" dbus-run-session bash <<EOF
+    # Force gsettings to look in the user's local directory for the new schema
+    export XDG_DATA_DIRS="${USER_HOME}/.local/share:/usr/local/share:/usr/share"
+
+    # Configure Vitals preferences
     gsettings set org.gnome.shell.extensions.vitals show-cpu true
     gsettings set org.gnome.shell.extensions.vitals show-memory true
     gsettings set org.gnome.shell.extensions.vitals show-storage true
@@ -36,16 +49,20 @@ install_vitals_minimal() {
     gsettings set org.gnome.shell.extensions.vitals show-network false
     gsettings set org.gnome.shell.extensions.vitals show-battery false
 
+    # Enable the extension in GNOME Shell
     current_exts=\$(gsettings get org.gnome.shell enabled-extensions)
-    if [[ ! "\$current_exts" == *"${EXT_UUID}"* ]]; then
+    if [[ "\$current_exts" != *"${EXT_UUID}"* ]]; then
       if [[ "\$current_exts" == "[]" || "\$current_exts" == "@as []" ]]; then
         new_exts="['${EXT_UUID}']"
       else
+        # Append to existing list
         new_exts="\${current_exts%]*}, '${EXT_UUID}']"
       fi
       gsettings set org.gnome.shell enabled-extensions "\$new_exts"
     fi
 EOF
+
+  echo "[Vitals] Success: Vitals extension installed and enabled for ${TARGET_USER}."
 }
 
 clone_odoo_community_versions() {
