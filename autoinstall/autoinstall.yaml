@@ -16,7 +16,7 @@ autoinstall:
         - fcitx5-unikey
         - fcitx5-frontend-gtk3
         - fcitx5-frontend-qt5
-        - postgresql-client-17
+        - postgresql-client
         - subversion
         - libapache2-svn
 
