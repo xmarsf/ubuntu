@@ -7,55 +7,52 @@ USER_HOME="/home/${TARGET_USER}"
 
 install_vitals_minimal() {
   local EXT_UUID="Vitals@CoreCoding.com"
-  # TARGET_USER and USER_HOME are defined globally in your script
   local EXT_DIR="${USER_HOME}/.local/share/gnome-shell/extensions/${EXT_UUID}"
+  local SCHEMAS_DIR="${EXT_DIR}/schemas"
 
   echo "[Vitals] Installing GNOME Shell extension for ${TARGET_USER}..."
   
-  # Safety check
   if ! id "$TARGET_USER" &>/dev/null; then
       echo "Error: User $TARGET_USER does not exist!"
       return 1
   fi
 
-  # 1. Clean and Prepare Directory
+  # 1. Clean and Clone
   sudo -u "${TARGET_USER}" mkdir -p "$(dirname "${EXT_DIR}")"
   sudo -u "${TARGET_USER}" rm -rf "${EXT_DIR}"
   
-  # 2. Clone Repository
   echo "[Vitals] Cloning repository..."
   sudo -u "${TARGET_USER}" git clone --depth 1 \
     https://github.com/corecoding/Vitals.git \
     "${EXT_DIR}"
 
-  # 3. Compile Schemas (CRITICAL STEP)
-  # Without this, 'gsettings set' will fail and the extension will error out.
+  # 2. Compile Schemas
   echo "[Vitals] Compiling GSettings schemas..."
-  sudo -u "${TARGET_USER}" glib-compile-schemas "${EXT_DIR}/schemas"
+  sudo -u "${TARGET_USER}" glib-compile-schemas "${SCHEMAS_DIR}"
 
-  # 4. Configure settings via dbus-run-session
+  # 3. Configure settings
+  # We use --schemadir so gsettings knows exactly where to look for the Vitals schema
   echo "[Vitals] Configuring metrics..."
   sudo -u "${TARGET_USER}" dbus-run-session bash <<EOF
-    # Force gsettings to look in the user's local directory for the new schema
-    export XDG_DATA_DIRS="${USER_HOME}/.local/share:/usr/local/share:/usr/share"
+    # Define schema dir inside the session for clarity
+    SCHEMAS="${SCHEMAS_DIR}"
 
-    # Configure Vitals preferences
-    gsettings set org.gnome.shell.extensions.vitals show-cpu true
-    gsettings set org.gnome.shell.extensions.vitals show-memory true
-    gsettings set org.gnome.shell.extensions.vitals show-storage false
-    gsettings set org.gnome.shell.extensions.vitals show-temperature false
-    gsettings set org.gnome.shell.extensions.vitals show-voltage false
-    gsettings set org.gnome.shell.extensions.vitals show-fan false
-    gsettings set org.gnome.shell.extensions.vitals show-network false
-    gsettings set org.gnome.shell.extensions.vitals show-battery false
+    # Note: We use --schemadir for Vitals commands because the extension isn't loaded yet.
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-cpu true
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-memory true
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-storage false
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-temperature false
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-voltage false
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-fan false
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-network false
+    gsettings --schemadir "\$SCHEMAS" set org.gnome.shell.extensions.vitals show-battery false
 
-    # Enable the extension in GNOME Shell
+    # Enable the extension (This uses the standard schema, so no --schemadir needed here)
     current_exts=\$(gsettings get org.gnome.shell enabled-extensions)
     if [[ "\$current_exts" != *"${EXT_UUID}"* ]]; then
       if [[ "\$current_exts" == "[]" || "\$current_exts" == "@as []" ]]; then
         new_exts="['${EXT_UUID}']"
       else
-        # Append to existing list
         new_exts="\${current_exts%]*}, '${EXT_UUID}']"
       fi
       gsettings set org.gnome.shell enabled-extensions "\$new_exts"
@@ -80,11 +77,8 @@ install_nodejs_npm() {
     nvm install 24
     nvm alias default 24
 
-    # Verify
-    node -v
-    npm -v
+    npm install -g rtlcss
   '
-  sudo npm install -g rtlcss
 }
 
 install_odoo_community() {

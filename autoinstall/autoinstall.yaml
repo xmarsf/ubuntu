@@ -4,6 +4,7 @@ autoinstall:
     packages:
         - libfuse2
         - gir1.2-gtop-2.0
+        - gnome-shell-extension-manager
         - dbus-x11
         - docker.io
         - docker-compose-v2
