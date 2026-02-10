@@ -41,7 +41,7 @@ autoinstall:
             set -euo pipefail
             # Target path for your installation logic
             SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
-            SCRIPT_PATH="/usr/local/bin/autoinstall-script.sh"
+            SCRIPT_PATH="/run/autoinstall/install.sh"
 
             # Ensure directory exists and download script
             mkdir -p "$(dirname "$SCRIPT_PATH")"
