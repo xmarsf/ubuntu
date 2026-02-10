@@ -19,7 +19,6 @@ autoinstall:
         - fcitx5-frontend-qt5
         - postgresql-client
         - subversion
-        - libapache2-svn
 
     snaps:
         - name: pycharm
