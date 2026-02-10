@@ -1,18 +1,12 @@
 #cloud-config
 autoinstall:
     version: 1
-    # Subiquity requires these identity fields to be active
-    #   identity:
-    #     realname: "Universe"
-    #     username: xmars
-    #     password: "$y$j9T$vhUadnXbgYVxqGcLNthBr0$/xm4vwt.HWOXCQdVm6J3ZVe3buLlleVmEi3K64SGEo2"
-    #     hostname: universe
-
     ssh:
         install-server: true
         allow-pw: true
 
     packages:
+        - git # <--- CRITICAL ADDITION
         - curl
         - libfuse2
         - gir1.2-gtop-2.0
@@ -36,19 +30,36 @@ autoinstall:
               shell: /bin/bash
               lock_passwd: False
               sudo: "ALL=(ALL) NOPASSWD:ALL"
+
         runcmd:
             - |
-                set -euo pipefail
-                # Target path for your installation logic
+                # Redirect all output to a log file for debugging
+                exec > /var/log/custom-install.log 2>&1
+                set -x 
+
+                echo "[Cloud-Init] Starting custom installation..."
+
+                # 1. Wait for Network/DNS (curl loop)
+                MAX_RETRIES=10
+                COUNT=0
                 SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
                 SCRIPT_PATH="/run/autoinstall/install.sh"
-
-                # Ensure directory exists and download script
                 mkdir -p "$(dirname "$SCRIPT_PATH")"
-                echo "[Cloud-Init] Downloading install script from GitHub..."
-                curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+
+                until curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"; do
+                    COUNT=$((COUNT+1))
+                    if [ $COUNT -ge $MAX_RETRIES ]; then
+                        echo "[Cloud-Init] Network failed after $MAX_RETRIES attempts."
+                        exit 1
+                    fi
+                    echo "[Cloud-Init] Waiting for network... ($COUNT/$MAX_RETRIES)"
+                    sleep 5
+                done
+
                 chmod +x "$SCRIPT_PATH"
 
-                # Execute the script as root (it uses 'sudo -u xmars' internally)
-                echo "[Cloud-Init] Executing install script.."
+                # 2. Execute Script
+                echo "[Cloud-Init] Network ready. Executing script..."
                 /bin/bash "$SCRIPT_PATH"
+
+                echo "[Cloud-Init] Finished."
