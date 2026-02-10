@@ -50,5 +50,5 @@ autoinstall:
             chmod +x "$SCRIPT_PATH"
 
             # Execute the script as root (it uses 'sudo -u xmars' internally)
-            echo "[Cloud-Init] Executing install script..."
+            echo "[Cloud-Init] Executing install script.."
             /bin/bash "$SCRIPT_PATH"
