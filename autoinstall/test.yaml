@@ -47,7 +47,7 @@ autoinstall:
                 # 1. Wait for Network/DNS (curl loop)
                 MAX_RETRIES=10
                 COUNT=0
-                SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/test.sh"
+                SCRIPT_URL="https://raw.githubusercontent.com/xmarsf/ubuntu/refs/heads/main/autoinstall/scripts/install.sh"
                 SCRIPT_PATH="/run/autoinstall/install.sh"
                 mkdir -p "$(dirname "$SCRIPT_PATH")"
 
