@@ -36,10 +36,12 @@ autoinstall:
         - name: gitlab
         - name: telegram-desktop
 
-    storage:
-        layout:
-            name: lvm
-            sizing-policy: all
+    interactive-sections:
+        - storage
+    # storage:
+    #     layout:
+    #         name: lvm
+    #         sizing-policy: all
 
     groups:
         - docker
