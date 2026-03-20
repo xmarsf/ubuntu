@@ -35,13 +35,12 @@ autoinstall:
           classic: true
         - name: rustrover
           classic: true
-        - name: code
-          classic: true
         - name: vault
         - name: bitwarden
         - name: postman
         - name: gitlab
         - name: telegram-desktop
+        - name: remmina
 
     storage:
         layout:
