@@ -28,10 +28,6 @@ autoinstall:
         - libsasl2-dev
 
     snaps:
-        - name: datagrip
-          classic: true
-        - name: rustrover
-          classic: true
         - name: vault
         - name: bitwarden
         - name: postman

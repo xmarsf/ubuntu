@@ -209,6 +209,27 @@ DESKTOP
   '
 }
 
+install_vscode() {
+  echo "[VSCode] Installing Visual Studio Code..."
+
+  local DEB_FILE="/tmp/code_latest.deb"
+
+  # Download the .deb package
+  echo "[VSCode] Downloading .deb package..."
+  curl -L -o "${DEB_FILE}" "https://go.microsoft.com/fwlink/?LinkID=760868"
+
+  # Auto-accept the Microsoft repo prompt for non-interactive install
+  echo "code code/add-microsoft-repo boolean true" | debconf-set-selections
+
+  # Install the .deb (this also sets up the apt repo and signing key for auto-updates)
+  echo "[VSCode] Installing..."
+  apt-get install -y "${DEB_FILE}"
+
+  rm -f "${DEB_FILE}"
+
+  echo "[VSCode] Visual Studio Code installed successfully."
+}
+
 install_nodejs_npm() {
   sudo -u ${TARGET_USER} -H bash -lc '
     set -euo pipefail
@@ -229,6 +250,8 @@ install_nodejs_npm() {
 }
 
 install_odoo_community() {
+
+  
   local BASE_DIR="${USER_HOME}/dev/odoo"
   local REPO_URL="https://github.com/odoo/odoo.git"
 
@@ -317,6 +340,7 @@ install_vitals_minimal
 setup_fcitx5_unikey
 install_odoo_community
 install_nodejs_npm
+install_vscode
 install_pycharm_pro
 install_rustrover
 install_datagrip
