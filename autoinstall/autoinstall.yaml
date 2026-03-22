@@ -58,6 +58,7 @@ autoinstall:
               groups: adm, cdrom, dip, lxd, plugdev, sudo, docker
               shell: /bin/bash
               lock_passwd: False
+
               sudo: "ALL=(ALL) NOPASSWD:ALL"
 
         runcmd:
