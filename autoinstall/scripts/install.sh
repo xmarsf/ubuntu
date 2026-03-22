@@ -209,6 +209,22 @@ DESKTOP
   '
 }
 
+install_google_chrome() {
+  echo "[Chrome] Installing Google Chrome..."
+
+  local DEB_FILE="/tmp/google-chrome-stable_current_amd64.deb"
+
+  echo "[Chrome] Downloading .deb package..."
+  wget -O "${DEB_FILE}" https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+
+  echo "[Chrome] Installing..."
+  apt-get install -y "${DEB_FILE}"
+
+  rm -f "${DEB_FILE}"
+
+  echo "[Chrome] Google Chrome installed successfully."
+}
+
 install_vscode() {
   echo "[VSCode] Installing Visual Studio Code..."
 
@@ -340,6 +356,7 @@ install_vitals_minimal
 setup_fcitx5_unikey
 install_odoo_community
 install_nodejs_npm
+install_google_chrome
 install_vscode
 install_pycharm_pro
 install_rustrover
