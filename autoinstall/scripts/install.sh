@@ -246,6 +246,27 @@ install_vscode() {
   echo "[VSCode] Visual Studio Code installed successfully."
 }
 
+
+
+install_antigravity() {
+  echo "[Antigravity] Installing Antigravity..."
+
+  # Add the repository signing key
+  mkdir -p /etc/apt/keyrings
+  curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
+    gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg
+
+  # Add the repository to sources
+  echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | \
+    tee /etc/apt/sources.list.d/antigravity.list > /dev/null
+
+  # Update and install
+  apt-get update
+  apt-get install -y antigravity
+
+  echo "[Antigravity] Antigravity installed successfully."
+}
+
 install_nodejs_npm() {
   sudo -u ${TARGET_USER} -H bash -lc '
     set -euo pipefail
@@ -357,6 +378,7 @@ setup_fcitx5_unikey
 install_odoo_community
 install_nodejs_npm
 install_google_chrome
+install_antigravity
 install_vscode
 install_pycharm_pro
 install_rustrover
