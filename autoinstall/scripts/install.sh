@@ -266,6 +266,16 @@ install_vscode() {
 
 
 
+install_flatpak() {
+  echo "[Flatpak] Installing Flatpak and Handbrake..."
+
+  apt-get install -y flatpak
+  flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  flatpak install -y flathub fr.handbrake.ghb
+
+  echo "[Flatpak] Flatpak and Handbrake installed successfully."
+}
+
 install_antigravity() {
   echo "[Antigravity] Installing Antigravity..."
 
@@ -402,3 +412,4 @@ install_pycharm_pro
 install_rustrover
 install_datagrip
 install_warp_cli
+install_flatpak
