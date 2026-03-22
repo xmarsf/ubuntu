@@ -62,6 +62,153 @@ EOF
   echo "[Vitals] Success: Vitals extension installed and enabled for ${TARGET_USER}."
 }
 
+install_pycharm_pro() {
+  echo "[PyCharm] Installing PyCharm Professional for ${TARGET_USER}..."
+
+  sudo -u ${TARGET_USER} -H bash -lc '
+    set -euo pipefail
+
+    INSTALL_DIR="$HOME/.local/share/JetBrains/pycharm"
+    BIN_DIR="$HOME/.local/bin"
+    DESKTOP_DIR="$HOME/.local/share/applications"
+
+    # Get the latest PyCharm Pro download URL from JetBrains API
+    PYCHARM_URL=$(curl -s "https://data.services.jetbrains.com/products/releases?code=PCP&latest=true&type=release" \
+      | grep -Po "\"linux\":\{\"link\":\"\K[^\"]+")
+
+    TEMP_DIR=$(mktemp -d)
+    echo "[PyCharm] Downloading..."
+    curl -fsSL -o "${TEMP_DIR}/pycharm.tar.gz" "${PYCHARM_URL}"
+
+    echo "[PyCharm] Extracting to ${INSTALL_DIR}..."
+    rm -rf "${INSTALL_DIR}"
+    mkdir -p "${INSTALL_DIR}"
+    tar -xzf "${TEMP_DIR}/pycharm.tar.gz" --strip-components=1 -C "${INSTALL_DIR}"
+    rm -rf "${TEMP_DIR}"
+
+    # Create symlink in ~/.local/bin for PATH access
+    mkdir -p "${BIN_DIR}"
+    ln -sf "${INSTALL_DIR}/bin/pycharm" "${BIN_DIR}/pycharm"
+
+    # Create desktop entry for GNOME integration
+    mkdir -p "${DESKTOP_DIR}"
+    cat > "${DESKTOP_DIR}/pycharm-professional.desktop" <<DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=PyCharm Professional
+Icon=${INSTALL_DIR}/bin/pycharm.svg
+Exec=${INSTALL_DIR}/bin/pycharm %f
+Comment=Python IDE for Professional Developers
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=jetbrains-pycharm
+
+
+
+StartupNotify=true
+DESKTOP
+
+    echo "[PyCharm] PyCharm Professional installed to ${INSTALL_DIR}"
+  '
+}
+
+install_rustrover() {
+  echo "[RustRover] Installing RustRover for ${TARGET_USER}..."
+
+  sudo -u ${TARGET_USER} -H bash -lc '
+    set -euo pipefail
+
+    INSTALL_DIR="$HOME/.local/share/JetBrains/rustrover"
+    BIN_DIR="$HOME/.local/bin"
+    DESKTOP_DIR="$HOME/.local/share/applications"
+
+    # Get the latest RustRover download URL from JetBrains API
+    RUSTROVER_URL=$(curl -s "https://data.services.jetbrains.com/products/releases?code=RR&latest=true&type=release" \
+      | grep -Po "\"linux\":\{\"link\":\"\K[^\"]+")
+
+    TEMP_DIR=$(mktemp -d)
+    echo "[RustRover] Downloading..."
+    curl -fsSL -o "${TEMP_DIR}/rustrover.tar.gz" "${RUSTROVER_URL}"
+
+    echo "[RustRover] Extracting to ${INSTALL_DIR}..."
+    rm -rf "${INSTALL_DIR}"
+    mkdir -p "${INSTALL_DIR}"
+    tar -xzf "${TEMP_DIR}/rustrover.tar.gz" --strip-components=1 -C "${INSTALL_DIR}"
+    rm -rf "${TEMP_DIR}"
+
+    # Create symlink in ~/.local/bin for PATH access
+    mkdir -p "${BIN_DIR}"
+    ln -sf "${INSTALL_DIR}/bin/rustrover" "${BIN_DIR}/rustrover"
+
+    # Create desktop entry for GNOME integration
+    mkdir -p "${DESKTOP_DIR}"
+    cat > "${DESKTOP_DIR}/rustrover.desktop" <<DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=RustRover
+Icon=${INSTALL_DIR}/bin/rustrover.svg
+Exec=${INSTALL_DIR}/bin/rustrover %f
+Comment=Rust IDE by JetBrains
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=jetbrains-rustrover
+StartupNotify=true
+DESKTOP
+
+    echo "[RustRover] RustRover installed to ${INSTALL_DIR}"
+  '
+}
+
+install_datagrip() {
+  echo "[DataGrip] Installing DataGrip for ${TARGET_USER}..."
+
+  sudo -u ${TARGET_USER} -H bash -lc '
+    set -euo pipefail
+
+    INSTALL_DIR="$HOME/.local/share/JetBrains/datagrip"
+    BIN_DIR="$HOME/.local/bin"
+    DESKTOP_DIR="$HOME/.local/share/applications"
+
+    # Get the latest DataGrip download URL from JetBrains API
+    DATAGRIP_URL=$(curl -s "https://data.services.jetbrains.com/products/releases?code=DG&latest=true&type=release" \
+      | grep -Po "\"linux\":\{\"link\":\"\K[^\"]+")
+
+    TEMP_DIR=$(mktemp -d)
+    echo "[DataGrip] Downloading..."
+    curl -fsSL -o "${TEMP_DIR}/datagrip.tar.gz" "${DATAGRIP_URL}"
+
+    echo "[DataGrip] Extracting to ${INSTALL_DIR}..."
+    rm -rf "${INSTALL_DIR}"
+    mkdir -p "${INSTALL_DIR}"
+    tar -xzf "${TEMP_DIR}/datagrip.tar.gz" --strip-components=1 -C "${INSTALL_DIR}"
+    rm -rf "${TEMP_DIR}"
+
+    # Create symlink in ~/.local/bin for PATH access
+    mkdir -p "${BIN_DIR}"
+    ln -sf "${INSTALL_DIR}/bin/datagrip" "${BIN_DIR}/datagrip"
+
+    # Create desktop entry for GNOME integration
+    mkdir -p "${DESKTOP_DIR}"
+    cat > "${DESKTOP_DIR}/datagrip.desktop" <<DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DataGrip
+Icon=${INSTALL_DIR}/bin/datagrip.svg
+Exec=${INSTALL_DIR}/bin/datagrip %f
+Comment=Database IDE by JetBrains
+Categories=Development;IDE;Database;
+Terminal=false
+StartupWMClass=jetbrains-datagrip
+StartupNotify=true
+DESKTOP
+
+    echo "[DataGrip] DataGrip installed to ${INSTALL_DIR}"
+  '
+}
+
 install_nodejs_npm() {
   sudo -u ${TARGET_USER} -H bash -lc '
     set -euo pipefail
@@ -170,3 +317,6 @@ install_vitals_minimal
 setup_fcitx5_unikey
 install_odoo_community
 install_nodejs_npm
+install_pycharm_pro
+install_rustrover
+install_datagrip
