@@ -209,6 +209,24 @@ DESKTOP
   '
 }
 
+install_warp_cli() {
+  echo "[WARP] Installing Cloudflare WARP CLI..."
+
+  # Add cloudflare gpg key
+  curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg \
+    | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+
+  # Add repo to apt sources
+  echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/cloudflare-client.list > /dev/null
+
+  # Install
+  apt-get update
+  apt-get install -y cloudflare-warp
+
+  echo "[WARP] Cloudflare WARP CLI installed successfully."
+}
+
 install_google_chrome() {
   echo "[Chrome] Installing Google Chrome..."
 
@@ -383,3 +401,4 @@ install_vscode
 install_pycharm_pro
 install_rustrover
 install_datagrip
+install_warp_cli
