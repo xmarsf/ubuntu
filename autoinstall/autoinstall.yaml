@@ -30,9 +30,6 @@ autoinstall:
     snaps:
         - name: vault
         - name: bitwarden
-        - name: postman
-        - name: gitlab
-        - name: telegram-desktop
         - name: remmina
         - name: vlc
 
